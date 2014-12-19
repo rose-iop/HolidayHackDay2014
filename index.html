@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <title>hello phaser!</title>
-        <script src="phaser.min.js"></script>
+        <script src="phaser-master/build/phaser.js"></script>
     </head>
     <body>
 
@@ -11,19 +11,73 @@
 
     window.onload = function() {
 
-        var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create });
+        var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+        var player, bg1, bg2;
+
+        var rowYs = [380, 460, 540];
+        var rowScales = [0.3, 0.35, 0.4];
+        var currentRow = 1;
+        var maxRow = 2;
+        var scrollSpeed = 3;
 
         function preload () {
 
-            game.load.image('logo', 'phaser.png');
+            // Load images
+            game.load.image('box', 'assets/box.png');
+            game.load.image('dude', 'assets/dude.png');
+
+            game.load.image('background', 'assets/bg2.png');
 
         }
 
         function create () {
+            // create background
+            bg1 = game.add.tileSprite(0, 0, 1090, 600, 'background');
+            bg2 = game.add.tileSprite(0, 0, 1090, 600, 'background');
+            bg2.x = bg1.width;
+            
+            // create marshmallow
+            game.physics.startSystem(Phaser.Physics.ARCADE);
+            player = game.add.sprite(32, 32, 'dude');
+            player.scale.set(0.4, 0.4);
+            player.anchor.set(0.5, 1);
+            game.physics.enable(player, Phaser.Physics.ARCADE);
+            player.x = 150;
 
-            var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
-            logo.anchor.setTo(0.5, 0.5);
+            cursors = game.input.keyboard.createCursorKeys();
 
+            // test:
+            /*
+            var dude = game.add.sprite(game.world.centerX, 500, 'dude');
+            dude.anchor.setTo(0.5, 0.5);
+
+            var box = game.add.sprite(game.world.centerX, 100, 'box');
+            */
+        }
+
+        function update () {
+            // move the marshmellow up and down
+            if (cursors.down.downDuration(5))
+            {
+                console.log('down');
+                if (currentRow < maxRow) currentRow ++;
+            }
+            else if (cursors.up.downDuration(5))
+            {
+                console.log('up');
+                if (currentRow > 0) currentRow --;
+            }
+            player.y = rowYs[currentRow];
+            player.scale.set( rowScales[currentRow], rowScales[currentRow] );
+
+            // check if the marshmellow intersects an obstacle
+
+            // scroll the scene
+            bg1.x -= scrollSpeed;
+            bg2.x -= scrollSpeed;
+            // if one of the backgrounds is offscreen, loop it back to the right side
+            if (bg1.x + bg1.width < 0) bg1.x = bg2.x + bg2.width;
+            if (bg2.x + bg2.width < 0) bg2.x = bg1.x + bg1.width;
         }
 
     };
