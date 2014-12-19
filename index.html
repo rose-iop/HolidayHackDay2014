@@ -11,8 +11,8 @@
 
     window.onload = function() {
 
-        var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
-        var player, bg1, bg2, obstacles;
+        var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update});
+        var player, bg1, bg2, obstacles, stick;
         var paused;
 
         var rowYs = [420, 490, 570];
@@ -21,6 +21,7 @@
         var maxRow = 2;
         var scrollSpeed = 3;
         var nextObstacleTime = 0;
+        var stickSpeed = 30;
 
 
         function preload () {
@@ -28,6 +29,8 @@
             // Load images
             game.load.image('obs1', 'assets/stump.png');
             game.load.spritesheet('mellow', 'assets/marshmallowRun.png', 609,600);
+            game.load.spritesheet('stick', 'assets/stick.png');
+
 
             game.load.image('background', 'assets/bg2.png');
             game.load.image('gameOverSplash', 'assets/bg2.png');
@@ -43,26 +46,34 @@
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
             // create marshmallow
-            player = game.add.sprite(150,0,'mellow');
+            player = game.add.sprite(200,0,'mellow');
             player.animations.add('run');
             player.animations.play('run',24,true);
 
             player.anchor.set(0.5, 1);
             game.physics.enable(player, Phaser.Physics.ARCADE);
+            player.body.setSize(300, 100, 0, -20);
+
+            // create stick
+            stick = game.add.sprite(20,-90,'stick');
+            stick.scale.set(0.4, 0.4);
+            game.physics.enable(stick, Phaser.Physics.ARCADE);
+            stick.body.velocity.y = -stickSpeed;
 
             cursors = game.input.keyboard.createCursorKeys();
             rKey = game.input.keyboard.addKey(Phaser.Keyboard.R);
 
-            obstacles = game.add.group(); // FIXME
+            obstacles = game.add.group();
+
+            scrollSpeed = 3;
         }
 
         function update () {
             // if they pressed 'r', restart the game
             if (rKey.downDuration(5)) {
-                obstacles.forEach( function(obs) {
-
-                });
+                game.world.removeAll();
                 create();
+                paused = false;
             }
 
             if (paused) return;
@@ -81,8 +92,6 @@
             player.y = rowYs[currentRow];
             player.scale.set( rowScales[currentRow], rowScales[currentRow] );
 
-            // check if the marshmellow intersects an obstacle
-
             // scroll the scene
             bg1.x -= scrollSpeed;
             bg2.x -= scrollSpeed;
@@ -93,9 +102,9 @@
             // move the obstacles
             obstacles.forEach( function(obs) {
                 obs.x -= scrollSpeed;
-                if (obs.x + obs.width < 0) obs.kill;
+                if (obs.x + obs.width < 0) obs.kill();
                 else {
-                    game.physics.arcade.collide(obs, player, lose, null, this);
+                    game.physics.arcade.overlap(obs, player, lose, null, this);
                 }
             } );
 
@@ -106,12 +115,17 @@
             }
 
             scrollSpeed += 0.01; // increment speed over time
+
+            // move stick
+            if (stick.y < -110 && stick.body.velocity.y < 0) stick.body.velocity.y = stickSpeed;
+            else if (stick.y > -90 && stick.body.velocity.y > 0) stick.body.velocity.y = -stickSpeed;
+
         }
 
         function createObstacle() {
             console.log("Create Obstacle!");
             var i = Math.floor(Math.random() * 3);
-            var obstacle = game.add.sprite(game.width + 10, rowYs[i], 'obs1');
+            var obstacle = game.add.sprite(game.width + 10, rowYs[i] - 20, 'obs1');
             obstacle.anchor.set(0, 1);
             obstacle.scale.set(rowScales[i] * 2.75, rowScales[i] * 2.75);
             console.log(obstacle.x, obstacle.y);
@@ -128,6 +142,10 @@
 
             // show text
             game.add.text(game.width / 2, game.height / 2, 'Game Over - Press R to restart');
+        }
+
+        function render() {
+            game.debug.body(player);
         }
 
     };
