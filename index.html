@@ -15,7 +15,7 @@
         var player, bg1, bg2, obstacles;
         var paused;
 
-        var rowYs = [380, 460, 540];
+        var rowYs = [420, 490, 570];
         var rowScales = [0.32, 0.35, 0.38];
         var currentRow = 1;
         var maxRow = 2;
@@ -27,7 +27,7 @@
 
             // Load images
             game.load.image('obs1', 'assets/stump.png');
-            game.load.image('dude', 'assets/dude.png');
+            game.load.spritesheet('mellow', 'assets/marshmallowRun.png', 609,600);
 
             game.load.image('background', 'assets/bg2.png');
             game.load.image('gameOverSplash', 'assets/bg2.png');
@@ -43,11 +43,12 @@
             game.physics.startSystem(Phaser.Physics.ARCADE);
 
             // create marshmallow
-            player = game.add.sprite(32, 32, 'dude');
-            player.scale.set(0.4, 0.4);
+            player = game.add.sprite(150,0,'mellow');
+            player.animations.add('run');
+            player.animations.play('run',24,true);
+
             player.anchor.set(0.5, 1);
             game.physics.enable(player, Phaser.Physics.ARCADE);
-            player.x = 150;
 
             cursors = game.input.keyboard.createCursorKeys();
             rKey = game.input.keyboard.addKey(Phaser.Keyboard.R);
@@ -109,10 +110,10 @@
 
         function createObstacle() {
             console.log("Create Obstacle!");
-            var y = rowYs[Math.floor(Math.random() * 3)];
-            var obstacle = game.add.sprite(game.width + 10, y, 'obs1');
+            var i = Math.floor(Math.random() * 3);
+            var obstacle = game.add.sprite(game.width + 10, rowYs[i], 'obs1');
             obstacle.anchor.set(0, 1);
-            obstacle.scale.set(1, 1);
+            obstacle.scale.set(rowScales[i] * 2.75, rowScales[i] * 2.75);
             console.log(obstacle.x, obstacle.y);
             obstacles.add(obstacle);
             game.physics.enable(obstacle, Phaser.Physics.ARCADE);
