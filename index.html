@@ -12,21 +12,25 @@
     window.onload = function() {
 
         var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
-        var player, bg1, bg2;
+        var player, bg1, bg2, obstacles;
+        var paused;
 
         var rowYs = [380, 460, 540];
-        var rowScales = [0.3, 0.35, 0.4];
+        var rowScales = [0.32, 0.35, 0.38];
         var currentRow = 1;
         var maxRow = 2;
         var scrollSpeed = 3;
+        var nextObstacleTime = 0;
+
 
         function preload () {
 
             // Load images
-            game.load.image('box', 'assets/box.png');
+            game.load.image('obs1', 'assets/stump.png');
             game.load.image('dude', 'assets/dude.png');
 
             game.load.image('background', 'assets/bg2.png');
+            game.load.image('gameOverSplash', 'assets/bg2.png');
 
         }
 
@@ -36,8 +40,9 @@
             bg2 = game.add.tileSprite(0, 0, 1090, 600, 'background');
             bg2.x = bg1.width;
             
-            // create marshmallow
             game.physics.startSystem(Phaser.Physics.ARCADE);
+
+            // create marshmallow
             player = game.add.sprite(32, 32, 'dude');
             player.scale.set(0.4, 0.4);
             player.anchor.set(0.5, 1);
@@ -45,17 +50,22 @@
             player.x = 150;
 
             cursors = game.input.keyboard.createCursorKeys();
+            rKey = game.input.keyboard.addKey(Phaser.Keyboard.R);
 
-            // test:
-            /*
-            var dude = game.add.sprite(game.world.centerX, 500, 'dude');
-            dude.anchor.setTo(0.5, 0.5);
-
-            var box = game.add.sprite(game.world.centerX, 100, 'box');
-            */
+            obstacles = game.add.group(); // FIXME
         }
 
         function update () {
+            // if they pressed 'r', restart the game
+            if (rKey.downDuration(5)) {
+                obstacles.forEach( function(obs) {
+
+                });
+                create();
+            }
+
+            if (paused) return;
+
             // move the marshmellow up and down
             if (cursors.down.downDuration(5))
             {
@@ -78,6 +88,45 @@
             // if one of the backgrounds is offscreen, loop it back to the right side
             if (bg1.x + bg1.width < 0) bg1.x = bg2.x + bg2.width;
             if (bg2.x + bg2.width < 0) bg2.x = bg1.x + bg1.width;
+
+            // move the obstacles
+            obstacles.forEach( function(obs) {
+                obs.x -= scrollSpeed;
+                if (obs.x + obs.width < 0) obs.kill;
+                else {
+                    game.physics.arcade.collide(obs, player, lose, null, this);
+                }
+            } );
+
+            nextObstacleTime -= scrollSpeed;
+            if (nextObstacleTime <= 0) {
+                createObstacle();
+                nextObstacleTime = Math.random() * 800 + 800;
+            }
+
+            scrollSpeed += 0.01; // increment speed over time
+        }
+
+        function createObstacle() {
+            console.log("Create Obstacle!");
+            var y = rowYs[Math.floor(Math.random() * 3)];
+            var obstacle = game.add.sprite(game.width + 10, y, 'obs1');
+            obstacle.anchor.set(0, 1);
+            obstacle.scale.set(1, 1);
+            console.log(obstacle.x, obstacle.y);
+            obstacles.add(obstacle);
+            game.physics.enable(obstacle, Phaser.Physics.ARCADE);
+        }
+
+        function lose() {
+            console.log("YOU LOSE");
+            paused = true;
+
+            // show a splash screen
+            game.add.sprite(0, 0, 'gameOverSplash'); // FIXME
+
+            // show text
+            game.add.text(game.width / 2, game.height / 2, 'Game Over - Press R to restart');
         }
 
     };
