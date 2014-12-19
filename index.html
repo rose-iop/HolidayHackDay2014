@@ -19,21 +19,21 @@
         var rowScales = [0.32, 0.35, 0.38];
         var currentRow = 1;
         var maxRow = 2;
-        var scrollSpeed = 3;
+        var scrollSpeed;
         var nextObstacleTime = 0;
         var stickSpeed = 30;
-
 
         function preload () {
 
             // Load images
             game.load.image('obs1', 'assets/stump.png');
+            game.load.image('obs2', 'assets/mushroom.png');
             game.load.spritesheet('mellow', 'assets/marshmallowRun.png', 609,600);
             game.load.spritesheet('stick', 'assets/stick.png');
 
 
             game.load.image('background', 'assets/bg2.png');
-            game.load.image('gameOverSplash', 'assets/bg2.png');
+            game.load.image('gameOverSplash', 'assets/deathScreen.png');
 
         }
 
@@ -65,7 +65,7 @@
 
             obstacles = game.add.group();
 
-            scrollSpeed = 3;
+            scrollSpeed = 3.5;
         }
 
         function update () {
@@ -111,7 +111,7 @@
             nextObstacleTime -= scrollSpeed;
             if (nextObstacleTime <= 0) {
                 createObstacle();
-                nextObstacleTime = Math.random() * 800 + 800;
+                nextObstacleTime = Math.random() * 800 + 300;
             }
 
             scrollSpeed += 0.01; // increment speed over time
@@ -125,12 +125,20 @@
         function createObstacle() {
             console.log("Create Obstacle!");
             var i = Math.floor(Math.random() * 3);
-            var obstacle = game.add.sprite(game.width + 10, rowYs[i] - 20, 'obs1');
+            var sprite = "obs" + Math.ceil(Math.random() * 2);
+            var obstacle = game.add.sprite(game.width + 10, rowYs[i] - 20, sprite);
             obstacle.anchor.set(0, 1);
-            obstacle.scale.set(rowScales[i] * 2.75, rowScales[i] * 2.75);
+            if (sprite == "obs2") { // mushroom
+                obstacle.scale.set(rowScales[i] * 1.75, rowScales[i] * 1.75);
+            } else { // log
+                obstacle.scale.set(rowScales[i] * 2.75, rowScales[i] * 2.75);
+
+            }
             console.log(obstacle.x, obstacle.y);
             obstacles.add(obstacle);
             game.physics.enable(obstacle, Phaser.Physics.ARCADE);
+
+            player.bringToTop();
         }
 
         function lose() {
@@ -138,10 +146,8 @@
             paused = true;
 
             // show a splash screen
-            game.add.sprite(0, 0, 'gameOverSplash'); // FIXME
+            game.add.sprite(0, 0, 'gameOverSplash');
 
-            // show text
-            game.add.text(game.width / 2, game.height / 2, 'Game Over - Press R to restart');
         }
 
         function render() {
